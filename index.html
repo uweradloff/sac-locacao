@@ -1349,14 +1349,18 @@ function loadFromHash() {
     panY = state.panY ?? 30;
     scale = state.scale ?? 1;
 
-    // Re-render everything
-    document.getElementById('nodesLayer').innerHTML = '';
-    nodes.forEach(n => renderNode(n));
-    renderConnections();
-    renderTeamsList();
-    updateSidebar();
-    updateStatus();
-    showToast('Fluxo carregado do link!');
+    // Aguarda o DOM estar pronto antes de renderizar
+    setTimeout(() => {
+      document.getElementById('nodesLayer').innerHTML = '';
+      document.getElementById('svgLayer').querySelectorAll('.connection-line').forEach(l => l.remove());
+      nodes.forEach(n => renderNode(n));
+      renderConnections();
+      renderTeamsList();
+      updateSidebar();
+      updateStatus();
+      showToast('Fluxo carregado!');
+    }, 100);
+
   } catch(e) {
     console.error('Erro ao carregar fluxo do link:', e);
     showToast('Erro ao carregar o link.');
