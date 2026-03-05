@@ -1,0 +1,1302 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZELT — Flow Builder</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy: #1E1B35;
+  --navy-mid: #2a2647;
+  --navy-light: #353060;
+  --orange: #FF9E36;
+  --orange-dark: #e8881a;
+  --white: #fff;
+  --gray: #c8c5d8;
+  --gray-soft: #f4f3f8;
+  --green: #2ecc71;
+  --red: #e74c3c;
+  --blue: #4a9eff;
+  --purple: #a78bfa;
+  --yellow: #fbbf24;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Atkinson Hyperlegible', sans-serif; background: var(--navy); color: var(--white); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+/* TOPBAR */
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 20px; height: 52px;
+  background: var(--navy-mid); border-bottom: 2px solid var(--orange);
+  flex-shrink: 0; z-index: 100;
+}
+.topbar-left { display: flex; align-items: center; gap: 14px; }
+.logo { font-family: 'Oswald', sans-serif; font-weight: 700; font-size: 16px; background: var(--orange); color: var(--navy); padding: 4px 10px; letter-spacing: 2px; }
+.topbar-title { font-family: 'Oswald', sans-serif; font-size: 14px; color: var(--gray); letter-spacing: 1px; font-weight: 400; }
+.topbar-right { display: flex; gap: 8px; }
+.btn { font-family: 'Oswald', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 1px; padding: 7px 16px; border: none; cursor: pointer; border-radius: 2px; transition: all 0.15s; text-transform: uppercase; }
+.btn-ghost { background: transparent; border: 1px solid var(--navy-light); color: var(--gray); }
+.btn-ghost:hover { border-color: var(--gray); color: var(--white); }
+.btn-primary { background: var(--orange); color: var(--navy); }
+.btn-primary:hover { background: var(--orange-dark); }
+.btn-green { background: var(--green); color: #0d1a0d; }
+.btn-green:hover { background: #27ae60; }
+
+/* LAYOUT */
+.workspace { display: flex; flex: 1; overflow: hidden; }
+
+/* SIDEBAR */
+.sidebar {
+  width: 220px; flex-shrink: 0;
+  background: var(--navy-mid); border-right: 1px solid var(--navy-light);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.sidebar-section { padding: 14px 16px 8px; font-family: 'Oswald', sans-serif; font-size: 10px; letter-spacing: 2px; color: var(--gray); text-transform: uppercase; }
+.block-palette { display: flex; flex-direction: column; gap: 6px; padding: 0 12px 12px; }
+.palette-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 12px; border-radius: 3px; cursor: grab;
+  font-size: 12px; font-weight: 700; border: 1px solid transparent;
+  transition: all 0.15s; user-select: none;
+}
+.palette-item:hover { transform: translateX(3px); }
+.palette-item:active { cursor: grabbing; }
+.pi-start { background: rgba(46,204,113,0.12); border-color: rgba(46,204,113,0.3); color: var(--green); }
+.pi-message { background: rgba(74,158,255,0.12); border-color: rgba(74,158,255,0.3); color: var(--blue); }
+.pi-question { background: rgba(255,158,54,0.12); border-color: rgba(255,158,54,0.3); color: var(--orange); }
+.pi-transfer { background: rgba(251,191,36,0.12); border-color: rgba(251,191,36,0.3); color: var(--yellow); }
+.pi-end { background: rgba(231,76,60,0.12); border-color: rgba(231,76,60,0.3); color: var(--red); }
+
+.sidebar-divider { border: none; border-top: 1px solid var(--navy-light); margin: 8px 12px; }
+
+.node-list { flex: 1; overflow-y: auto; padding: 0 12px 12px; }
+.node-list-item {
+  padding: 8px 10px; margin-bottom: 4px; border-radius: 3px;
+  font-size: 11px; cursor: pointer; border: 1px solid var(--navy-light);
+  transition: all 0.15s; display: flex; align-items: center; gap: 8px;
+  background: rgba(255,255,255,0.03);
+}
+.node-list-item:hover { background: rgba(255,255,255,0.07); border-color: var(--orange); }
+.node-list-item .nli-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.node-list-item .nli-label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--gray); }
+
+/* SIDEBAR TABS */
+.sidebar-tabs { display: flex; border-bottom: 1px solid var(--navy-light); flex-shrink: 0; }
+.sidebar-tab {
+  flex: 1; padding: 9px 4px; text-align: center;
+  font-family: 'Oswald', sans-serif; font-size: 10px; letter-spacing: 1px;
+  color: var(--gray); cursor: pointer; border-bottom: 2px solid transparent;
+  transition: all 0.15s; text-transform: uppercase;
+}
+.sidebar-tab:hover { color: var(--white); }
+.sidebar-tab.active { color: var(--orange); border-bottom-color: var(--orange); }
+.sidebar-pane { display: none; flex: 1; flex-direction: column; overflow: hidden; }
+.sidebar-pane.active { display: flex; }
+
+/* TEAMS */
+.teams-list { flex: 1; overflow-y: auto; padding: 8px 12px 12px; display: flex; flex-direction: column; gap: 6px; }
+.team-item {
+  background: rgba(255,255,255,0.03); border: 1px solid var(--navy-light);
+  border-radius: 3px; padding: 8px 10px; position: relative;
+}
+.team-item-name { font-family: 'Oswald', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 1px; margin-bottom: 2px; }
+.team-item-desc { font-size: 10px; color: var(--gray); line-height: 1.4; }
+.team-item-meta { display: flex; gap: 6px; margin-top: 5px; flex-wrap: wrap; }
+.team-tag { font-size: 9px; font-family: 'Oswald', sans-serif; letter-spacing: 1px; padding: 2px 6px; border-radius: 2px; }
+.team-actions { display: flex; gap: 4px; margin-top: 6px; }
+.team-btn-sm { font-size: 9px; font-family: 'Oswald', sans-serif; padding: 3px 8px; border: 1px solid; border-radius: 2px; cursor: pointer; background: transparent; letter-spacing: 1px; }
+.team-btn-edit { color: var(--orange); border-color: rgba(255,158,54,0.3); }
+.team-btn-edit:hover { background: rgba(255,158,54,0.1); }
+.team-btn-del { color: var(--red); border-color: rgba(231,76,60,0.3); }
+.team-btn-del:hover { background: rgba(231,76,60,0.1); }
+.add-team-btn {
+  margin: 0 12px 12px; padding: 8px; border: 1px dashed rgba(255,158,54,0.4);
+  background: rgba(255,158,54,0.05); color: var(--orange);
+  font-family: 'Oswald', sans-serif; font-size: 11px; letter-spacing: 1px;
+  cursor: pointer; border-radius: 2px; text-align: center; flex-shrink: 0;
+}
+.add-team-btn:hover { background: rgba(255,158,54,0.12); }
+
+/* TEAM MODAL */
+.team-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 600; display: none; align-items: center; justify-content: center; }
+.team-modal-overlay.open { display: flex; }
+.team-modal { background: var(--navy-mid); border: 1px solid var(--navy-light); border-radius: 4px; padding: 24px; width: 360px; display: flex; flex-direction: column; gap: 14px; }
+.team-modal-title { font-family: 'Oswald', sans-serif; font-size: 16px; color: var(--orange); letter-spacing: 1px; }
+.team-color-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.color-swatch { width: 22px; height: 22px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: all 0.15s; }
+.color-swatch.selected { border-color: var(--white); transform: scale(1.2); }
+.team-modal-actions { display: flex; gap: 8px; }
+
+/* CANVAS */
+.canvas-wrap { flex: 1; position: relative; overflow: hidden; background: var(--navy); }
+.canvas-grid {
+  position: absolute; inset: 0;
+  background-image: radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px);
+  background-size: 28px 28px;
+  pointer-events: none;
+}
+#canvas { position: absolute; inset: 0; width: 100%; height: 100%; cursor: default; }
+
+/* SVG connections */
+.connection-line { stroke: var(--navy-light); stroke-width: 2; fill: none; marker-end: url(#arrowhead); cursor: pointer; transition: stroke 0.15s; }
+.connection-line:hover { stroke: var(--orange); }
+.connection-line.selected { stroke: var(--orange); stroke-width: 2.5; }
+
+/* NODES */
+.node {
+  position: absolute; min-width: 180px; max-width: 240px;
+  border-radius: 4px; cursor: move; user-select: none;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  border: 2px solid transparent; transition: border-color 0.15s, box-shadow 0.15s;
+}
+.node:hover { box-shadow: 0 6px 28px rgba(0,0,0,0.5); }
+.node.selected { border-color: var(--orange) !important; box-shadow: 0 0 0 3px rgba(255,158,54,0.2); }
+.node.dragging { opacity: 0.85; z-index: 1000; }
+
+.node-start { background: #0f2b1a; border-color: rgba(46,204,113,0.4); }
+.node-message { background: #0f1e2b; border-color: rgba(74,158,255,0.4); }
+.node-question { background: #2b1f0a; border-color: rgba(255,158,54,0.4); }
+.node-transfer { background: #2b2309; border-color: rgba(251,191,36,0.3); }
+.node-end { background: #2b0f0f; border-color: rgba(231,76,60,0.4); }
+
+.node-header {
+  padding: 8px 10px; display: flex; align-items: center; gap: 7px;
+  font-family: 'Oswald', sans-serif; font-size: 11px; font-weight: 600;
+  letter-spacing: 1px; border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+.node-start .node-header { color: var(--green); }
+.node-message .node-header { color: var(--blue); }
+.node-question .node-header { color: var(--orange); }
+.node-transfer .node-header { color: var(--yellow); }
+.node-end .node-header { color: var(--red); }
+
+.node-body { padding: 10px 10px 8px; }
+.node-label {
+  font-size: 11px; color: rgba(255,255,255,0.75); line-height: 1.5;
+  word-break: break-word;
+}
+.node-options { margin-top: 6px; display: flex; flex-direction: column; gap: 3px; }
+.node-option {
+  font-size: 10px; color: var(--orange); padding: 3px 7px;
+  background: rgba(255,158,54,0.1); border-radius: 2px; border: 1px solid rgba(255,158,54,0.2);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.option-port {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--orange); border: 2px solid var(--orange-dark);
+  cursor: crosshair; flex-shrink: 0; transition: transform 0.1s;
+}
+.option-port:hover { transform: scale(1.4); }
+
+/* IN/OUT PORTS */
+.port-in, .port-out {
+  position: absolute; width: 12px; height: 12px;
+  border-radius: 50%; border: 2px solid;
+  cursor: crosshair; transition: transform 0.15s;
+  z-index: 10;
+}
+.port-in { top: 50%; left: -7px; transform: translateY(-50%); background: var(--navy-mid); border-color: var(--blue); }
+.port-out { top: 50%; right: -7px; transform: translateY(-50%); background: var(--navy-mid); border-color: var(--green); }
+.port-in:hover, .port-out:hover { transform: translateY(-50%) scale(1.4); }
+
+.node-delete {
+  position: absolute; top: 4px; right: 4px;
+  width: 16px; height: 16px; border-radius: 50%;
+  background: rgba(231,76,60,0.2); border: 1px solid rgba(231,76,60,0.3);
+  color: var(--red); font-size: 9px; line-height: 16px; text-align: center;
+  cursor: pointer; opacity: 0; transition: opacity 0.15s;
+}
+.node:hover .node-delete { opacity: 1; }
+.node-delete:hover { background: var(--red); color: white; }
+
+/* PANEL DIREITO — EDIT */
+.edit-panel {
+  width: 260px; flex-shrink: 0;
+  background: var(--navy-mid); border-left: 1px solid var(--navy-light);
+  display: flex; flex-direction: column; overflow: hidden;
+  transition: transform 0.2s;
+}
+.edit-panel.hidden { transform: translateX(260px); width: 0; overflow: hidden; }
+.panel-header {
+  padding: 14px 16px 10px; font-family: 'Oswald', sans-serif;
+  font-size: 12px; letter-spacing: 2px; color: var(--orange); text-transform: uppercase;
+  border-bottom: 1px solid var(--navy-light); display: flex; justify-content: space-between; align-items: center;
+}
+.panel-close { background: none; border: none; color: var(--gray); cursor: pointer; font-size: 16px; }
+.panel-body { padding: 16px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 14px; }
+
+.field-group { display: flex; flex-direction: column; gap: 5px; }
+.field-label { font-size: 10px; font-family: 'Oswald', sans-serif; letter-spacing: 1px; color: var(--gray); text-transform: uppercase; }
+.field-input, .field-textarea, .field-select {
+  background: var(--navy); border: 1px solid var(--navy-light); color: var(--white);
+  padding: 8px 10px; font-family: 'Atkinson Hyperlegible', sans-serif; font-size: 12px;
+  border-radius: 2px; transition: border-color 0.15s; width: 100%;
+}
+.field-input:focus, .field-textarea:focus, .field-select:focus {
+  outline: none; border-color: var(--orange);
+}
+.field-textarea { resize: vertical; min-height: 80px; }
+.field-select option { background: var(--navy); }
+
+.options-editor { display: flex; flex-direction: column; gap: 6px; }
+.option-row { display: flex; gap: 6px; align-items: center; }
+.option-row input { flex: 1; background: var(--navy); border: 1px solid var(--navy-light); color: var(--white); padding: 6px 8px; font-size: 11px; border-radius: 2px; font-family: 'Atkinson Hyperlegible', sans-serif; }
+.option-row input:focus { outline: none; border-color: var(--orange); }
+.option-remove { background: rgba(231,76,60,0.2); border: 1px solid rgba(231,76,60,0.3); color: var(--red); width: 24px; height: 24px; border-radius: 2px; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.option-remove:hover { background: var(--red); color: white; }
+.add-option-btn { background: rgba(255,158,54,0.1); border: 1px dashed rgba(255,158,54,0.4); color: var(--orange); padding: 6px; font-size: 11px; font-family: 'Oswald', sans-serif; letter-spacing: 1px; cursor: pointer; border-radius: 2px; text-align: center; }
+.add-option-btn:hover { background: rgba(255,158,54,0.2); }
+
+.apply-btn { background: var(--orange); color: var(--navy); font-family: 'Oswald', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 1px; padding: 10px; border: none; cursor: pointer; border-radius: 2px; text-transform: uppercase; }
+.apply-btn:hover { background: var(--orange-dark); }
+
+/* MODAL EXPORT */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 500; display: none; align-items: center; justify-content: center; }
+.modal-overlay.open { display: flex; }
+.modal { background: var(--navy-mid); border: 1px solid var(--navy-light); border-radius: 4px; padding: 28px; width: 600px; max-height: 80vh; display: flex; flex-direction: column; gap: 16px; }
+.modal-title { font-family: 'Oswald', sans-serif; font-size: 18px; color: var(--orange); letter-spacing: 1px; }
+.modal-code { background: #0d0b1a; border: 1px solid var(--navy-light); border-radius: 3px; padding: 16px; font-family: 'Courier New', monospace; font-size: 11px; color: #b0a8d0; overflow-y: auto; flex: 1; white-space: pre; line-height: 1.6; max-height: 40vh; }
+.modal-actions { display: flex; gap: 8px; }
+
+/* STATUS BAR */
+.statusbar { height: 26px; background: #110f22; border-top: 1px solid var(--navy-light); display: flex; align-items: center; padding: 0 16px; gap: 20px; flex-shrink: 0; }
+.status-item { font-size: 10px; color: var(--gray); font-family: 'Oswald', sans-serif; letter-spacing: 1px; display: flex; align-items: center; gap: 5px; }
+.status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+
+/* ZOOM CONTROLS */
+.zoom-controls { position: absolute; bottom: 36px; right: 16px; display: flex; flex-direction: column; gap: 4px; z-index: 50; }
+.zoom-btn { width: 30px; height: 30px; background: var(--navy-mid); border: 1px solid var(--navy-light); color: var(--white); font-size: 16px; cursor: pointer; border-radius: 2px; display: flex; align-items: center; justify-content: center; }
+.zoom-btn:hover { background: var(--navy-light); }
+
+/* MINI HELP */
+.help-tip { position: absolute; bottom: 36px; left: 16px; font-size: 10px; color: rgba(255,255,255,0.25); z-index: 50; line-height: 1.8; pointer-events: none; }
+
+/* TOAST */
+.toast { position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--green); color: #0d1a0d; font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; padding: 10px 20px; border-radius: 2px; z-index: 999; opacity: 0; transition: all 0.3s; pointer-events: none; }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* PDF PRINT */
+@media print {
+  @page { size: A4 landscape; margin: 12mm; }
+  body { background: #fff !important; color: #1E1B35 !important; height: auto !important; overflow: visible !important; }
+  .topbar, .sidebar, .edit-panel, .statusbar, .zoom-controls, .help-tip, .modal-overlay { display: none !important; }
+  .workspace { display: block !important; height: auto !important; overflow: visible !important; }
+  .canvas-wrap { overflow: visible !important; height: auto !important; position: relative !important; }
+  .canvas-grid { display: none !important; }
+  #nodesLayer { position: relative !important; width: 100% !important; height: auto !important; }
+  #svgLayer { display: none !important; }
+  .node { position: relative !important; left: auto !important; top: auto !important; display: inline-block !important; margin: 6px !important; transform: none !important; box-shadow: 0 1px 4px rgba(0,0,0,0.15) !important; break-inside: avoid; vertical-align: top; }
+  .node-delete, .port-in, .port-out, .option-port { display: none !important; }
+  .node-start { background: #e8faf1 !important; border-color: #2ecc71 !important; }
+  .node-message { background: #e8f4fd !important; border-color: #4a9eff !important; }
+  .node-question { background: #fff8ee !important; border-color: #FF9E36 !important; }
+  .node-transfer { background: #fffbea !important; border-color: #fbbf24 !important; }
+  .node-end { background: #fdf0ef !important; border-color: #e74c3c !important; }
+  .node-header { color: #1E1B35 !important; border-bottom-color: rgba(0,0,0,0.1) !important; }
+  .node-label { color: #333 !important; }
+  .node-option { background: #fff3e0 !important; border-color: #FF9E36 !important; color: #1E1B35 !important; }
+
+  /* PDF header */
+  .pdf-header { display: flex !important; }
+
+  /* Connections table in PDF */
+  .pdf-connections { display: block !important; margin-top: 16px; }
+}
+
+.pdf-header {
+  display: none;
+  align-items: center; justify-content: space-between;
+  padding-bottom: 10px; border-bottom: 2px solid #FF9E36; margin-bottom: 14px;
+}
+.pdf-header-logo { font-family: 'Oswald', sans-serif; font-weight: 700; font-size: 18px; background: #FF9E36; color: #1E1B35; padding: 4px 10px; letter-spacing: 2px; }
+.pdf-header-title { font-family: 'Oswald', sans-serif; font-size: 14px; color: #1E1B35; letter-spacing: 1px; }
+.pdf-header-date { font-size: 11px; color: #888; }
+
+.pdf-connections {
+  display: none;
+  margin-top: 20px; border-top: 1px solid #ddd; padding-top: 14px;
+}
+.pdf-connections-title { font-family: 'Oswald', sans-serif; font-size: 13px; color: #1E1B35; letter-spacing: 1px; margin-bottom: 10px; text-transform: uppercase; }
+.pdf-conn-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+.pdf-conn-table th { background: #1E1B35; color: #fff; padding: 6px 10px; text-align: left; font-family: 'Oswald', sans-serif; letter-spacing: 1px; font-size: 10px; }
+.pdf-conn-table td { padding: 5px 10px; border-bottom: 1px solid #eee; color: #333; }
+.pdf-conn-table tr:nth-child(even) td { background: #f8f8f8; }
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="logo">ZELT</div>
+    <div class="topbar-title">FLOW BUILDER · SAC</div>
+  </div>
+  <div class="topbar-right">
+    <button class="btn btn-ghost" onclick="clearAll()">🗑 Limpar</button>
+    <button class="btn btn-ghost" onclick="loadExample()">📂 Exemplo</button>
+    <button class="btn btn-primary" onclick="openExport()">📤 Exportar Mermaid</button>
+    <button class="btn btn-green" onclick="exportPDF()">🖨 Exportar PDF</button>
+  </div>
+</div>
+
+<!-- PDF-only header (oculto na tela, aparece no print) -->
+<div class="pdf-header" id="pdfHeader">
+  <div style="display:flex;align-items:center;gap:12px">
+    <div class="pdf-header-logo">ZELT</div>
+    <div class="pdf-header-title">FLUXOGRAMA SAC · LOCAÇÃO</div>
+  </div>
+  <div class="pdf-header-date" id="pdfDate"></div>
+</div>
+
+<!-- WORKSPACE -->
+<div class="workspace">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-tabs">
+      <div class="sidebar-tab active" onclick="switchSidebarTab('blocos',this)">🧩 Blocos</div>
+      <div class="sidebar-tab" onclick="switchSidebarTab('setores',this)">👥 Setores</div>
+      <div class="sidebar-tab" onclick="switchSidebarTab('nos',this)">📋 Nós</div>
+    </div>
+
+    <!-- PANE: BLOCOS -->
+    <div class="sidebar-pane active" id="pane-blocos">
+      <div class="sidebar-section">Arraste para o canvas</div>
+      <div class="block-palette">
+        <div class="palette-item pi-start" draggable="true" data-type="start" ondragstart="onDragStart(event)">▶ Início</div>
+        <div class="palette-item pi-message" draggable="true" data-type="message" ondragstart="onDragStart(event)">💬 Mensagem</div>
+        <div class="palette-item pi-question" draggable="true" data-type="question" ondragstart="onDragStart(event)">❓ Pergunta</div>
+        <div class="palette-item pi-transfer" draggable="true" data-type="transfer" ondragstart="onDragStart(event)">⚡ Transferir</div>
+        <div class="palette-item pi-end" draggable="true" data-type="end" ondragstart="onDragStart(event)">✅ Fim</div>
+      </div>
+      <hr class="sidebar-divider">
+      <div class="sidebar-section" style="font-size:9px;color:rgba(200,197,216,0.5)">Dica: cadastre os Setores antes de usar o bloco Transferir</div>
+    </div>
+
+    <!-- PANE: SETORES -->
+    <div class="sidebar-pane" id="pane-setores">
+      <div class="sidebar-section">Times de atendimento</div>
+      <div class="teams-list" id="teamsList"></div>
+      <button class="add-team-btn" onclick="openTeamModal()">+ Novo Setor</button>
+    </div>
+
+    <!-- PANE: NÓS -->
+    <div class="sidebar-pane" id="pane-nos">
+      <div class="sidebar-section">Nós no Canvas</div>
+      <div class="node-list" id="nodeList"></div>
+    </div>
+  </div>
+
+  <!-- CANVAS -->
+  <div class="canvas-wrap" id="canvasWrap"
+    ondragover="event.preventDefault()"
+    ondrop="onDrop(event)"
+    onmousedown="onCanvasMouseDown(event)"
+    onmousemove="onCanvasMouseMove(event)"
+    onmouseup="onCanvasMouseUp(event)">
+    <div class="canvas-grid"></div>
+
+    <!-- SVG for connections -->
+    <svg id="svgLayer" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible">
+      <defs>
+        <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#353060"/>
+        </marker>
+        <marker id="arrowhead-orange" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#FF9E36"/>
+        </marker>
+      </defs>
+    </svg>
+
+    <!-- Nodes rendered here -->
+    <div id="nodesLayer" style="position:absolute;inset:0"></div>
+
+    <!-- Zoom -->
+    <div class="zoom-controls">
+      <button class="zoom-btn" onclick="zoom(0.15)">+</button>
+      <button class="zoom-btn" onclick="zoom(-0.15)">−</button>
+      <button class="zoom-btn" onclick="resetZoom()" style="font-size:10px;font-family:'Oswald',sans-serif">FIT</button>
+    </div>
+
+    <div class="help-tip">
+      Arraste blocos da esquerda · Clique num nó para editar<br>
+      Clique na porta verde (→) e arraste até a porta azul (←) para conectar
+    </div>
+  </div>
+
+  <!-- EDIT PANEL -->
+  <div class="edit-panel hidden" id="editPanel">
+    <div class="panel-header">
+      <span id="panelTypeLabel">Editar Nó</span>
+      <button class="panel-close" onclick="closePanel()">✕</button>
+    </div>
+    <div class="panel-body" id="panelBody"></div>
+  </div>
+
+</div>
+
+<!-- STATUS BAR -->
+<div class="statusbar">
+  <div class="status-item"><div class="status-dot"></div> <span id="statusNodes">0 nós</span></div>
+  <div class="status-item">🔗 <span id="statusConns">0 conexões</span></div>
+  <div class="status-item" id="statusSelected" style="color:var(--orange)"></div>
+</div>
+
+<!-- MODAL: SETOR -->
+<div class="team-modal-overlay" id="teamModal">
+  <div class="team-modal">
+    <div class="team-modal-title" id="teamModalTitle">Novo Setor</div>
+    <div class="field-group">
+      <div class="field-label">Nome do setor *</div>
+      <input class="field-input" id="tm-name" placeholder="ex: Time Financeiro">
+    </div>
+    <div class="field-group">
+      <div class="field-label">Responsável</div>
+      <input class="field-input" id="tm-owner" placeholder="ex: Maria Silva">
+    </div>
+    <div class="field-group">
+      <div class="field-label">Horário de atendimento</div>
+      <input class="field-input" id="tm-hours" placeholder="ex: Seg–Sex, 8h–18h">
+    </div>
+    <div class="field-group">
+      <div class="field-label">Descrição / assuntos atendidos</div>
+      <textarea class="field-textarea" id="tm-desc" placeholder="ex: Boletos, repasses, DIMOB..." style="min-height:60px"></textarea>
+    </div>
+    <div class="field-group">
+      <div class="field-label">Cor de identificação</div>
+      <div class="team-color-row" id="colorSwatches"></div>
+    </div>
+    <div class="team-modal-actions">
+      <button class="apply-btn" style="flex:1" onclick="saveTeam()">Salvar Setor</button>
+      <button class="btn btn-ghost" onclick="closeTeamModal()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EXPORT -->
+<div class="modal-overlay" id="exportModal">
+  <div class="modal">
+    <div class="modal-title">📤 Código Mermaid</div>
+    <div class="modal-code" id="mermaidOutput"></div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" onclick="copyMermaid()">📋 Copiar</button>
+      <button class="btn btn-ghost" onclick="closeExport()">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== STATE =====
+let nodes = [];
+let connections = [];
+let teams = [];
+let teamIdCounter = 1;
+let editingTeamId = null;
+let nodeIdCounter = 1;
+let selectedNode = null;
+let selectedConn = null;
+let draggingNode = null;
+let dragOffset = { x: 0, y: 0 };
+let connectingFrom = null;
+let scale = 1;
+let panX = 0, panY = 0;
+let isPanning = false;
+let panStart = { x: 0, y: 0 };
+let tempLine = null;
+
+const TYPE_COLORS = {
+  start: '#2ecc71', message: '#4a9eff',
+  question: '#FF9E36', transfer: '#fbbf24', end: '#e74c3c'
+};
+const TYPE_LABELS = {
+  start: '▶ INÍCIO', message: '💬 MENSAGEM',
+  question: '❓ PERGUNTA', transfer: '⚡ TRANSFERIR', end: '✅ FIM'
+};
+
+const TEAM_COLORS = ['#FF9E36','#2ecc71','#4a9eff','#a78bfa','#e74c3c','#fbbf24','#1abc9c','#e67e22','#e91e8c','#00bcd4'];
+
+// ===== SIDEBAR TABS =====
+function switchSidebarTab(name, el) {
+  document.querySelectorAll('.sidebar-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.sidebar-pane').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('pane-' + name).classList.add('active');
+}
+
+// ===== TEAMS =====
+function openTeamModal(teamId) {
+  editingTeamId = teamId || null;
+  const modal = document.getElementById('teamModal');
+  const title = document.getElementById('teamModalTitle');
+
+  // Build color swatches
+  const swatchRow = document.getElementById('colorSwatches');
+  swatchRow.innerHTML = '';
+  TEAM_COLORS.forEach(color => {
+    const s = document.createElement('div');
+    s.className = 'color-swatch';
+    s.style.background = color;
+    s.dataset.color = color;
+    s.onclick = () => {
+      swatchRow.querySelectorAll('.color-swatch').forEach(x => x.classList.remove('selected'));
+      s.classList.add('selected');
+    };
+    swatchRow.appendChild(s);
+  });
+
+  if (teamId) {
+    const team = teams.find(t => t.id === teamId);
+    title.textContent = 'Editar Setor';
+    document.getElementById('tm-name').value = team.name;
+    document.getElementById('tm-owner').value = team.owner || '';
+    document.getElementById('tm-hours').value = team.hours || '';
+    document.getElementById('tm-desc').value = team.desc || '';
+    const swatch = swatchRow.querySelector(`[data-color="${team.color}"]`);
+    if (swatch) swatch.classList.add('selected');
+    else swatchRow.firstChild?.classList.add('selected');
+  } else {
+    title.textContent = 'Novo Setor';
+    document.getElementById('tm-name').value = '';
+    document.getElementById('tm-owner').value = '';
+    document.getElementById('tm-hours').value = '';
+    document.getElementById('tm-desc').value = '';
+    swatchRow.firstChild?.classList.add('selected');
+  }
+
+  modal.classList.add('open');
+  document.getElementById('tm-name').focus();
+}
+
+function closeTeamModal() {
+  document.getElementById('teamModal').classList.remove('open');
+  editingTeamId = null;
+}
+
+function saveTeam() {
+  const name = document.getElementById('tm-name').value.trim();
+  if (!name) { document.getElementById('tm-name').style.borderColor = 'var(--red)'; return; }
+  document.getElementById('tm-name').style.borderColor = '';
+
+  const selectedSwatch = document.querySelector('#colorSwatches .color-swatch.selected');
+  const color = selectedSwatch ? selectedSwatch.dataset.color : TEAM_COLORS[0];
+
+  if (editingTeamId) {
+    const team = teams.find(t => t.id === editingTeamId);
+    team.name = name;
+    team.owner = document.getElementById('tm-owner').value.trim();
+    team.hours = document.getElementById('tm-hours').value.trim();
+    team.desc = document.getElementById('tm-desc').value.trim();
+    team.color = color;
+    // Update any transfer nodes using this team
+    nodes.forEach(n => { if (n.type === 'transfer' && n.teamId === editingTeamId) { n.label = name; refreshNode(n.id); } });
+  } else {
+    const id = 'team' + teamIdCounter++;
+    teams.push({ id, name, owner: document.getElementById('tm-owner').value.trim(), hours: document.getElementById('tm-hours').value.trim(), desc: document.getElementById('tm-desc').value.trim(), color });
+  }
+
+  closeTeamModal();
+  renderTeamsList();
+  renderConnections();
+  showToast(editingTeamId ? 'Setor atualizado!' : 'Setor cadastrado!');
+}
+
+function deleteTeam(teamId) {
+  if (!confirm('Remover setor? Blocos de transferência vinculados serão desvinculados.')) return;
+  teams = teams.filter(t => t.id !== teamId);
+  nodes.forEach(n => { if (n.type === 'transfer' && n.teamId === teamId) { n.teamId = null; refreshNode(n.id); } });
+  renderTeamsList();
+  showToast('Setor removido');
+}
+
+function renderTeamsList() {
+  const list = document.getElementById('teamsList');
+  if (!teams.length) {
+    list.innerHTML = '<div style="font-size:11px;color:rgba(200,197,216,0.4);text-align:center;padding:20px 10px;line-height:1.7">Nenhum setor cadastrado.<br>Clique em "+ Novo Setor"<br>para começar.</div>';
+    return;
+  }
+  list.innerHTML = '';
+  teams.forEach(team => {
+    const item = document.createElement('div');
+    item.className = 'team-item';
+    item.style.borderLeftColor = team.color;
+    item.style.borderLeftWidth = '3px';
+    item.innerHTML = `
+      <div class="team-item-name" style="color:${team.color}">${team.name}</div>
+      ${team.owner ? `<div class="team-item-desc">👤 ${team.owner}</div>` : ''}
+      ${team.hours ? `<div class="team-item-desc">🕐 ${team.hours}</div>` : ''}
+      ${team.desc ? `<div class="team-item-desc" style="margin-top:3px">${team.desc}</div>` : ''}
+      <div class="team-actions">
+        <button class="team-btn-sm team-btn-edit" onclick="openTeamModal('${team.id}')">✏ Editar</button>
+        <button class="team-btn-sm team-btn-del" onclick="deleteTeam('${team.id}')">✕ Remover</button>
+      </div>
+    `;
+    list.appendChild(item);
+  });
+}
+let dragType = null;
+function onDragStart(e) { dragType = e.target.dataset.type; }
+
+function onDrop(e) {
+  e.preventDefault();
+  if (!dragType) return;
+  const wrap = document.getElementById('canvasWrap');
+  const rect = wrap.getBoundingClientRect();
+  const x = (e.clientX - rect.left - panX) / scale;
+  const y = (e.clientY - rect.top - panY) / scale;
+  createNode(dragType, x - 90, y - 30);
+  dragType = null;
+}
+
+function createNode(type, x, y, label) {
+  const id = 'n' + nodeIdCounter++;
+  const defaults = {
+    start: 'Início da conversa',
+    message: 'Escreva a mensagem do bot aqui...',
+    question: 'Pergunta ao usuário',
+    transfer: 'Time de Atendimento',
+    end: 'Conversa encerrada'
+  };
+  const node = {
+    id, type, x: Math.round(x), y: Math.round(y),
+    label: label || defaults[type],
+    options: type === 'question' ? ['Opção 1', 'Opção 2'] : []
+  };
+  nodes.push(node);
+  renderNode(node);
+  updateSidebar();
+  updateStatus();
+  return node;
+}
+
+function renderNode(node) {
+  const layer = document.getElementById('nodesLayer');
+  const el = document.createElement('div');
+  el.className = `node node-${node.type}`;
+  el.id = `node-${node.id}`;
+  el.style.left = (node.x * scale + panX) + 'px';
+  el.style.top = (node.y * scale + panY) + 'px';
+  el.style.transform = `scale(${scale})`;
+  el.style.transformOrigin = 'top left';
+
+  let optionsHTML = '';
+  if (node.type === 'question' && node.options.length) {
+    optionsHTML = '<div class="node-options">' +
+      node.options.map((o, i) => `
+        <div class="node-option">
+          <span>${o || 'Opção ' + (i+1)}</span>
+          <div class="option-port" data-nodeid="${node.id}" data-optindex="${i}" onmousedown="startConnect(event,'${node.id}','option',${i})"></div>
+        </div>`).join('') +
+      '</div>';
+  }
+
+  // Team badge for transfer nodes
+  let teamBadge = '';
+  if (node.type === 'transfer' && node.teamId) {
+    const team = teams.find(t => t.id === node.teamId);
+    if (team) {
+      el.style.borderColor = team.color + '88';
+      teamBadge = `<div style="margin-top:5px;font-size:9px;font-family:'Oswald',sans-serif;letter-spacing:1px;padding:2px 6px;background:${team.color}22;border:1px solid ${team.color}44;color:${team.color};border-radius:2px;display:inline-block">⚡ ${team.name}</div>`;
+      if (team.hours) teamBadge += `<div style="font-size:9px;color:rgba(200,197,216,0.5);margin-top:2px">🕐 ${team.hours}</div>`;
+    }
+  }
+
+  el.innerHTML = `
+    <div class="node-header">${TYPE_LABELS[node.type]}</div>
+    <div class="node-body">
+      <div class="node-label">${node.label}</div>
+      ${optionsHTML}
+      ${teamBadge}
+    </div>
+    ${node.type !== 'start' ? `<div class="port-in" data-nodeid="${node.id}" onmousedown="startConnect(event,'${node.id}','in')"></div>` : ''}
+    ${(node.type !== 'end' && node.type !== 'question') ? `<div class="port-out" data-nodeid="${node.id}" onmousedown="startConnect(event,'${node.id}','out')"></div>` : ''}
+    <div class="node-delete" onclick="deleteNode('${node.id}')">✕</div>
+  `;
+
+  el.addEventListener('mousedown', (e) => {
+    if (e.target.classList.contains('port-in') || e.target.classList.contains('port-out') || e.target.classList.contains('option-port') || e.target.classList.contains('node-delete')) return;
+    e.stopPropagation();
+    selectNode(node.id);
+    startDragNode(e, node.id);
+  });
+
+  el.addEventListener('click', (e) => {
+    if (e.target.classList.contains('node-delete')) return;
+    selectNode(node.id);
+    openPanel(node.id);
+  });
+
+  layer.appendChild(el);
+}
+
+function refreshNode(nodeId) {
+  const el = document.getElementById(`node-${nodeId}`);
+  if (el) el.remove();
+  const node = nodes.find(n => n.id === nodeId);
+  if (node) renderNode(node);
+  repositionNode(nodeId);
+}
+
+function repositionNode(nodeId) {
+  const node = nodes.find(n => n.id === nodeId);
+  if (!node) return;
+  const el = document.getElementById(`node-${nodeId}`);
+  if (!el) return;
+  el.style.left = (node.x * scale + panX) + 'px';
+  el.style.top = (node.y * scale + panY) + 'px';
+  el.style.transform = `scale(${scale})`;
+}
+
+function repositionAll() {
+  nodes.forEach(n => repositionNode(n.id));
+  renderConnections();
+}
+
+// ===== DRAG NODE =====
+function startDragNode(e, nodeId) {
+  draggingNode = nodeId;
+  const node = nodes.find(n => n.id === nodeId);
+  const wrap = document.getElementById('canvasWrap');
+  const rect = wrap.getBoundingClientRect();
+  dragOffset.x = (e.clientX - rect.left - panX) / scale - node.x;
+  dragOffset.y = (e.clientY - rect.top - panY) / scale - node.y;
+  document.getElementById(`node-${nodeId}`).classList.add('dragging');
+}
+
+// ===== CONNECTIONS =====
+function startConnect(e, nodeId, portType, optIndex) {
+  e.stopPropagation();
+  e.preventDefault();
+  connectingFrom = { nodeId, portType, optIndex: optIndex ?? -1 };
+
+  // Create temp SVG line
+  const svg = document.getElementById('svgLayer');
+  tempLine = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  tempLine.setAttribute('stroke', '#FF9E36');
+  tempLine.setAttribute('stroke-width', '2');
+  tempLine.setAttribute('stroke-dasharray', '6,3');
+  tempLine.setAttribute('fill', 'none');
+  svg.appendChild(tempLine);
+}
+
+function getPortPos(nodeId, portType, optIndex) {
+  const node = nodes.find(n => n.id === nodeId);
+  const el = document.getElementById(`node-${nodeId}`);
+  if (!node || !el) return { x: 0, y: 0 };
+  const wrap = document.getElementById('canvasWrap');
+  const wrapRect = wrap.getBoundingClientRect();
+  const elRect = el.getBoundingClientRect();
+
+  if (portType === 'in') {
+    return {
+      x: elRect.left - wrapRect.left + 6,
+      y: elRect.top - wrapRect.top + elRect.height / 2
+    };
+  } else if (portType === 'out') {
+    return {
+      x: elRect.right - wrapRect.left - 6,
+      y: elRect.top - wrapRect.top + elRect.height / 2
+    };
+  } else if (portType === 'option') {
+    const ports = el.querySelectorAll('.option-port');
+    if (ports[optIndex]) {
+      const pr = ports[optIndex].getBoundingClientRect();
+      return {
+        x: pr.right - wrapRect.left - 5,
+        y: pr.top - wrapRect.top + 5
+      };
+    }
+  }
+  return { x: 0, y: 0 };
+}
+
+function makeBezier(x1, y1, x2, y2) {
+  const cp = Math.abs(x2 - x1) * 0.5;
+  return `M ${x1} ${y1} C ${x1 + cp} ${y1}, ${x2 - cp} ${y2}, ${x2} ${y2}`;
+}
+
+function renderConnections() {
+  const svg = document.getElementById('svgLayer');
+  // Remove old connection paths
+  svg.querySelectorAll('.connection-line').forEach(l => l.remove());
+
+  connections.forEach(conn => {
+    const fromPos = getPortPos(conn.from, conn.fromPort, conn.fromOptIndex);
+    const toPos = getPortPos(conn.to, 'in', -1);
+
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('class', 'connection-line' + (selectedConn === conn.id ? ' selected' : ''));
+    path.setAttribute('d', makeBezier(fromPos.x, fromPos.y, toPos.x, toPos.y));
+    path.setAttribute('marker-end', selectedConn === conn.id ? 'url(#arrowhead-orange)' : 'url(#arrowhead)');
+    path.setAttribute('pointer-events', 'stroke');
+    path.setAttribute('style', 'pointer-events:stroke');
+    path.addEventListener('click', (e) => {
+      e.stopPropagation();
+      selectedConn = selectedConn === conn.id ? null : conn.id;
+      renderConnections();
+    });
+    path.addEventListener('dblclick', (e) => {
+      e.stopPropagation();
+      deleteConnection(conn.id);
+    });
+    svg.appendChild(path);
+  });
+}
+
+function deleteConnection(connId) {
+  connections = connections.filter(c => c.id !== connId);
+  selectedConn = null;
+  renderConnections();
+  updateStatus();
+  showToast('Conexão removida');
+}
+
+// ===== CANVAS MOUSE EVENTS =====
+function onCanvasMouseDown(e) {
+  if (e.target.id === 'canvasWrap' || e.target.classList.contains('canvas-grid') || e.target.id === 'nodesLayer') {
+    if (e.button === 1 || (e.button === 0 && e.altKey)) {
+      isPanning = true;
+      panStart = { x: e.clientX - panX, y: e.clientY - panY };
+      e.preventDefault();
+    } else {
+      selectedNode = null;
+      selectedConn = null;
+      document.querySelectorAll('.node.selected').forEach(n => n.classList.remove('selected'));
+      renderConnections();
+      closePanel();
+      updateStatus();
+    }
+  }
+}
+
+function onCanvasMouseMove(e) {
+  if (isPanning) {
+    panX = e.clientX - panStart.x;
+    panY = e.clientY - panStart.y;
+    repositionAll();
+    return;
+  }
+
+  if (draggingNode) {
+    const wrap = document.getElementById('canvasWrap');
+    const rect = wrap.getBoundingClientRect();
+    const node = nodes.find(n => n.id === draggingNode);
+    node.x = Math.round((e.clientX - rect.left - panX) / scale - dragOffset.x);
+    node.y = Math.round((e.clientY - rect.top - panY) / scale - dragOffset.y);
+    repositionNode(draggingNode);
+    renderConnections();
+    return;
+  }
+
+  if (connectingFrom && tempLine) {
+    const wrap = document.getElementById('canvasWrap');
+    const rect = wrap.getBoundingClientRect();
+    const fromPos = getPortPos(connectingFrom.nodeId, connectingFrom.portType, connectingFrom.optIndex);
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+    tempLine.setAttribute('d', makeBezier(fromPos.x, fromPos.y, mx, my));
+  }
+}
+
+function onCanvasMouseUp(e) {
+  isPanning = false;
+
+  if (draggingNode) {
+    document.getElementById(`node-${draggingNode}`)?.classList.remove('dragging');
+    draggingNode = null;
+    updateSidebar();
+  }
+
+  if (connectingFrom) {
+    // Check if mouse is over an 'in' port
+    const el = document.elementFromPoint(e.clientX, e.clientY);
+    if (el && el.classList.contains('port-in')) {
+      const toId = el.dataset.nodeid;
+      if (toId && toId !== connectingFrom.nodeId) {
+        const exists = connections.find(c =>
+          c.from === connectingFrom.nodeId && c.to === toId &&
+          c.fromPort === connectingFrom.portType && c.fromOptIndex === connectingFrom.optIndex
+        );
+        if (!exists) {
+          const connId = 'c' + Date.now();
+          connections.push({
+            id: connId,
+            from: connectingFrom.nodeId,
+            fromPort: connectingFrom.portType,
+            fromOptIndex: connectingFrom.optIndex,
+            to: toId
+          });
+          updateStatus();
+          showToast('Conexão criada!');
+        }
+      }
+    }
+    if (tempLine) { tempLine.remove(); tempLine = null; }
+    connectingFrom = null;
+    renderConnections();
+  }
+}
+
+// ===== SELECT / DELETE =====
+function selectNode(nodeId) {
+  selectedNode = nodeId;
+  selectedConn = null;
+  document.querySelectorAll('.node.selected').forEach(n => n.classList.remove('selected'));
+  document.getElementById(`node-${nodeId}`)?.classList.add('selected');
+  renderConnections();
+  updateStatus();
+}
+
+function deleteNode(nodeId) {
+  nodes = nodes.filter(n => n.id !== nodeId);
+  connections = connections.filter(c => c.from !== nodeId && c.to !== nodeId);
+  document.getElementById(`node-${nodeId}`)?.remove();
+  if (selectedNode === nodeId) { selectedNode = null; closePanel(); }
+  renderConnections();
+  updateSidebar();
+  updateStatus();
+  showToast('Nó removido');
+}
+
+// ===== EDIT PANEL =====
+function openPanel(nodeId) {
+  const node = nodes.find(n => n.id === nodeId);
+  if (!node) return;
+  const panel = document.getElementById('editPanel');
+  panel.classList.remove('hidden');
+  document.getElementById('panelTypeLabel').textContent = TYPE_LABELS[node.type];
+
+  const body = document.getElementById('panelBody');
+  body.innerHTML = '';
+
+  // Label field
+  const labelGroup = document.createElement('div');
+  labelGroup.className = 'field-group';
+  labelGroup.innerHTML = `
+    <div class="field-label">Texto / Mensagem</div>
+    <textarea class="field-textarea" id="pe-label" placeholder="Conteúdo do bloco...">${node.label}</textarea>
+  `;
+  body.appendChild(labelGroup);
+
+  // Options (for question)
+  if (node.type === 'question') {
+    const optGroup = document.createElement('div');
+    optGroup.className = 'field-group';
+    optGroup.innerHTML = `<div class="field-label">Opções de Resposta</div>`;
+    const optEditor = document.createElement('div');
+    optEditor.className = 'options-editor';
+    optEditor.id = 'optionsEditor';
+
+    node.options.forEach((opt, i) => {
+      const row = document.createElement('div');
+      row.className = 'option-row';
+      row.innerHTML = `<input type="text" value="${opt}" placeholder="Opção ${i+1}" data-index="${i}">
+        <button class="option-remove" onclick="removeOption(${i})">✕</button>`;
+      optEditor.appendChild(row);
+    });
+
+    const addBtn = document.createElement('button');
+    addBtn.className = 'add-option-btn';
+    addBtn.textContent = '+ Adicionar opção';
+    addBtn.onclick = addOption;
+    optEditor.appendChild(addBtn);
+    optGroup.appendChild(optEditor);
+    body.appendChild(optGroup);
+  }
+
+  // Transfer team (for transfer)
+  if (node.type === 'transfer') {
+    const teamGroup = document.createElement('div');
+    teamGroup.className = 'field-group';
+
+    if (!teams.length) {
+      teamGroup.innerHTML = `
+        <div class="field-label">Setor de Destino</div>
+        <div style="font-size:11px;color:var(--yellow);padding:8px;background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.2);border-radius:2px">
+          ⚠ Nenhum setor cadastrado.<br>
+          <span style="cursor:pointer;text-decoration:underline" onclick="switchSidebarTab('setores', document.querySelectorAll('.sidebar-tab')[1]); closePanel()">Cadastre setores aqui →</span>
+        </div>`;
+    } else {
+      let opts = `<option value="">— Selecionar setor —</option>` +
+        teams.map(t => `<option value="${t.id}" ${node.teamId===t.id?'selected':''}>${t.name}</option>`).join('');
+      teamGroup.innerHTML = `
+        <div class="field-label">Setor de Destino</div>
+        <select class="field-select" id="pe-team">${opts}</select>`;
+
+      // Show selected team info
+      if (node.teamId) {
+        const t = teams.find(x => x.id === node.teamId);
+        if (t) {
+          const info = document.createElement('div');
+          info.style.cssText = 'font-size:10px;padding:6px 8px;background:rgba(255,255,255,0.04);border-left:3px solid '+t.color+';margin-top:4px;color:var(--gray);line-height:1.6';
+          info.innerHTML = (t.owner ? `👤 ${t.owner}<br>` : '') + (t.hours ? `🕐 ${t.hours}` : '');
+          if (t.owner || t.hours) teamGroup.appendChild(info);
+        }
+      }
+    }
+    body.appendChild(teamGroup);
+  }
+
+  const applyBtn = document.createElement('button');
+  applyBtn.className = 'apply-btn';
+  applyBtn.textContent = 'Aplicar';
+  applyBtn.onclick = () => applyPanel(nodeId);
+  body.appendChild(applyBtn);
+}
+
+function addOption() {
+  const node = nodes.find(n => n.id === selectedNode);
+  if (!node) return;
+  node.options.push('Nova opção');
+  openPanel(selectedNode);
+  refreshNode(selectedNode);
+  renderConnections();
+}
+
+function removeOption(i) {
+  const node = nodes.find(n => n.id === selectedNode);
+  if (!node) return;
+  node.options.splice(i, 1);
+  connections = connections.filter(c => !(c.from === selectedNode && c.fromOptIndex === i));
+  // Re-index
+  connections.forEach(c => { if (c.from === selectedNode && c.fromOptIndex > i) c.fromOptIndex--; });
+  openPanel(selectedNode);
+  refreshNode(selectedNode);
+  renderConnections();
+}
+
+function applyPanel(nodeId) {
+  const node = nodes.find(n => n.id === nodeId);
+  if (!node) return;
+  const label = document.getElementById('pe-label');
+  if (label) node.label = label.value;
+
+  if (node.type === 'question') {
+    const inputs = document.querySelectorAll('#optionsEditor input');
+    node.options = Array.from(inputs).map(i => i.value);
+  }
+  if (node.type === 'transfer') {
+    const teamSel = document.getElementById('pe-team');
+    if (teamSel && teamSel.value) {
+      node.teamId = teamSel.value;
+      const team = teams.find(t => t.id === teamSel.value);
+      if (team && (!label || !label.value.trim())) node.label = team.name;
+    }
+  }
+
+  refreshNode(nodeId);
+  renderConnections();
+  updateSidebar();
+  openPanel(nodeId); // refresh panel to show team info
+  showToast('Salvo!');
+}
+
+function closePanel() {
+  document.getElementById('editPanel').classList.add('hidden');
+}
+
+// ===== SIDEBAR LIST =====
+function updateSidebar() {
+  const list = document.getElementById('nodeList');
+  list.innerHTML = '';
+  nodes.forEach(node => {
+    const item = document.createElement('div');
+    item.className = 'node-list-item';
+    item.innerHTML = `<div class="nli-dot" style="background:${TYPE_COLORS[node.type]}"></div>
+      <div class="nli-label">${node.label.substring(0, 35)}</div>`;
+    item.onclick = () => { selectNode(node.id); openPanel(node.id); };
+    list.appendChild(item);
+  });
+}
+
+// ===== STATUS =====
+function updateStatus() {
+  document.getElementById('statusNodes').textContent = `${nodes.length} nós`;
+  document.getElementById('statusConns').textContent = `${connections.length} conexões`;
+  const sel = selectedNode ? nodes.find(n => n.id === selectedNode) : null;
+  document.getElementById('statusSelected').textContent = sel ? `✏ ${sel.label.substring(0, 30)}` : '';
+}
+
+// ===== ZOOM =====
+function zoom(delta) {
+  scale = Math.max(0.3, Math.min(2, scale + delta));
+  repositionAll();
+}
+function resetZoom() {
+  scale = 1; panX = 40; panY = 40;
+  repositionAll();
+}
+
+// ===== EXPORT MERMAID =====
+function openExport() {
+  const code = generateMermaid();
+  document.getElementById('mermaidOutput').textContent = code;
+  document.getElementById('exportModal').classList.add('open');
+}
+function closeExport() { document.getElementById('exportModal').classList.remove('open'); }
+function copyMermaid() {
+  navigator.clipboard.writeText(document.getElementById('mermaidOutput').textContent);
+  showToast('Código copiado!');
+}
+
+function generateMermaid() {
+  if (!nodes.length) return '%% Nenhum nó adicionado';
+  let lines = ['flowchart TD'];
+
+  nodes.forEach(node => {
+    const id = node.id;
+    const label = node.label.replace(/"/g, "'").replace(/\n/g, ' ');
+
+    if (node.type === 'start') {
+      lines.push(`    ${id}([▶ ${label}])`);
+    } else if (node.type === 'end') {
+      lines.push(`    ${id}([✅ ${label}])`);
+    } else if (node.type === 'question') {
+      lines.push(`    ${id}{{"${label}"}}`);
+    } else if (node.type === 'transfer') {
+      const team = node.team || 'atendimento';
+      lines.push(`    ${id}["⚡ Transferir → ${team}"]`);
+    } else {
+      lines.push(`    ${id}["${label}"]`);
+    }
+  });
+
+  lines.push('');
+
+  connections.forEach(conn => {
+    const fromNode = nodes.find(n => n.id === conn.from);
+    let label = '';
+    if (conn.fromPort === 'option' && fromNode && fromNode.options[conn.fromOptIndex]) {
+      label = `|"${fromNode.options[conn.fromOptIndex]}"|`;
+    }
+    lines.push(`    ${conn.from} -->${label} ${conn.to}`);
+  });
+
+  return lines.join('\n');
+}
+
+// ===== CLEAR / EXAMPLE =====
+function clearAll() {
+  if (!confirm('Limpar todo o canvas?')) return;
+  nodes = []; connections = [];
+  document.getElementById('nodesLayer').innerHTML = '';
+  document.getElementById('svgLayer').querySelectorAll('.connection-line').forEach(l => l.remove());
+  selectedNode = null; selectedConn = null;
+  closePanel(); updateSidebar(); updateStatus();
+}
+
+function loadExample() {
+  clearAll();
+  panX = 30; panY = 30;
+
+  const n1 = createNode('start', 40, 80, 'Contato recebido');
+  const n2 = createNode('message', 280, 80, 'Olá! Você fala com a ZELT Imóveis. Como posso te ajudar?');
+  const n3 = createNode('question', 540, 80, 'Quem é você?');
+  n3.options = ['Sou inquilino', 'Sou proprietário', 'Falar com atendente'];
+  refreshNode(n3.id);
+
+  const n4 = createNode('question', 800, 20, 'Assunto do inquilino');
+  n4.options = ['Boleto / 2ª via', 'Manutenção', 'Rescisão'];
+  refreshNode(n4.id);
+
+  const n5 = createNode('question', 800, 200, 'Assunto do proprietário');
+  n5.options = ['Repasse do aluguel', 'Extrato / contas'];
+  refreshNode(n5.id);
+
+  const n6 = createNode('transfer', 1070, 20, 'Time Financeiro');
+  n6.team = 'financeiro';
+  refreshNode(n6.id);
+
+  const n7 = createNode('transfer', 1070, 120, 'Time Manutenção');
+  n7.team = 'manutencao';
+  refreshNode(n7.id);
+
+  const n8 = createNode('end', 1070, 220, 'Conversa encerrada');
+
+  connections = [
+    { id: 'c1', from: n1.id, fromPort: 'out', fromOptIndex: -1, to: n2.id },
+    { id: 'c2', from: n2.id, fromPort: 'out', fromOptIndex: -1, to: n3.id },
+    { id: 'c3', from: n3.id, fromPort: 'option', fromOptIndex: 0, to: n4.id },
+    { id: 'c4', from: n3.id, fromPort: 'option', fromOptIndex: 1, to: n5.id },
+    { id: 'c5', from: n3.id, fromPort: 'option', fromOptIndex: 2, to: n6.id },
+    { id: 'c6', from: n4.id, fromPort: 'option', fromOptIndex: 0, to: n6.id },
+    { id: 'c7', from: n4.id, fromPort: 'option', fromOptIndex: 1, to: n7.id },
+    { id: 'c8', from: n5.id, fromPort: 'option', fromOptIndex: 0, to: n6.id },
+    { id: 'c9', from: n5.id, fromPort: 'option', fromOptIndex: 1, to: n8.id },
+  ];
+
+  repositionAll();
+  updateSidebar();
+  updateStatus();
+}
+
+// ===== TOAST =====
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// ===== PDF EXPORT =====
+function exportPDF() {
+  if (!nodes.length) { showToast('Adicione blocos primeiro!'); return; }
+
+  // Set date
+  document.getElementById('pdfDate').textContent =
+    'Gerado em ' + new Date().toLocaleDateString('pt-BR', { day:'2-digit', month:'long', year:'numeric' });
+
+  // Build connections table
+  let connTable = document.getElementById('pdfConnectionsSection');
+  if (connTable) connTable.remove();
+
+  const section = document.createElement('div');
+  section.id = 'pdfConnectionsSection';
+  section.className = 'pdf-connections';
+
+  let rows = '';
+  connections.forEach(conn => {
+    const fromNode = nodes.find(n => n.id === conn.from);
+    const toNode = nodes.find(n => n.id === conn.to);
+    if (!fromNode || !toNode) return;
+    const optLabel = conn.fromPort === 'option' && fromNode.options[conn.fromOptIndex]
+      ? fromNode.options[conn.fromOptIndex] : '—';
+    rows += `<tr>
+      <td>${fromNode.label.substring(0,40)}</td>
+      <td>${optLabel}</td>
+      <td>${toNode.label.substring(0,40)}</td>
+    </tr>`;
+  });
+
+  section.innerHTML = `
+    <div class="pdf-connections-title">🔗 Mapa de Conexões (${connections.length})</div>
+    <table class="pdf-conn-table">
+      <thead><tr><th>De</th><th>Via opção</th><th>Para</th></tr></thead>
+      <tbody>${rows || '<tr><td colspan="3" style="color:#999">Nenhuma conexão definida</td></tr>'}</tbody>
+    </table>
+  `;
+  document.body.appendChild(section);
+
+  window.print();
+}
+
+// ===== KEYBOARD =====
+document.addEventListener('keydown', (e) => {
+  if ((e.key === 'Delete' || e.key === 'Backspace') && selectedNode && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+    deleteNode(selectedNode);
+  }
+  if ((e.key === 'Delete' || e.key === 'Backspace') && selectedConn) {
+    deleteConnection(selectedConn);
+  }
+  if (e.key === 'Escape') { closePanel(); selectedNode = null; selectedConn = null; document.querySelectorAll('.node.selected').forEach(n => n.classList.remove('selected')); renderConnections(); }
+});
+
+// Init
+panX = 30; panY = 30;
+renderTeamsList();
+updateStatus();
+</script>
+</body>
+</html>
